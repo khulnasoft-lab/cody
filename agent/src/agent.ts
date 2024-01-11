@@ -558,8 +558,45 @@ export class Agent extends MessageHandler {
             return Promise.resolve(null)
         })
 
+        this.registerRequest('commands/explain', () => {
+            return this.createChatPanel(vscode.commands.executeCommand('cody.command.explain-code'))
+        })
+
+        this.registerRequest('commands/test', () => {
+            return this.createChatPanel(vscode.commands.executeCommand('cody.command.generate-tests'))
+        })
+
+        this.registerRequest('commands/smell', () => {
+            return this.createChatPanel(vscode.commands.executeCommand('cody.command.smell-code'))
+        })
+
         this.registerRequest('chat/new', () => {
             return this.createChatPanel(vscode.commands.executeCommand('cody.chat.panel.new'))
+        })
+
+        this.registerRequest('chat/restore', async ({ modelID, messages, chatID }) => {
+            const chatModel = new SimpleChatModel(modelID, [], chatID, undefined)
+            for (const message of messages) {
+                if (message.error) {
+                    chatModel.addErrorAsBotMessage(message.error)
+                } else if (message.speaker === 'assistant') {
+                    chatModel.addBotMessage(message)
+                } else if (message.speaker === 'human') {
+                    chatModel.addHumanMessage(message)
+                }
+            }
+            const authStatus = await vscode.commands.executeCommand<AuthStatus>('cody.auth.status')
+            await chatHistory.saveChat(authStatus, chatModel.toTranscriptJSON())
+            return this.createChatPanel(vscode.commands.executeCommand('cody.chat.panel.restore', [chatID]))
+        })
+
+        this.registerRequest('chat/models', async ({ id }) => {
+            const panel = this.webPanels.getPanelOrError(id)
+            if (panel.models) {
+                return { models: panel.models }
+            }
+            await this.receiveWebviewMessage(id, { command: 'get-chat-models' })
+            return { models: panel.models ?? [] }
         })
 
         this.registerRequest('chat/restore', async ({ modelID, messages, chatID }) => {
