@@ -53,7 +53,7 @@ interface GraphProvider {
 }
 
 export interface ContextGroup {
-    name: string
+    name: string // TODO(sqs): this is overloaded and treated like a path
     providers: ContextProvider[]
 }
 
