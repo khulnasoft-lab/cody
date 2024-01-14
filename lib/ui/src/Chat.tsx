@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import classNames from 'classnames'
 
 import {
+    displayPath,
     isDefined,
     type ChatButton,
     type ChatInputHistory,
@@ -243,8 +244,8 @@ export const Chat: React.FunctionComponent<ChatProps> = ({
     function getContextFileDisplayText(contextFile: ContextFile): string {
         const isFileType = contextFile.type === 'file'
         const range = contextFile.range ? `:${contextFile.range?.start.line}-${contextFile.range?.end.line}` : ''
-        const symbolName = isFileType ? '' : `#${contextFile.fileName}`
-        return `@${contextFile.path?.relative}${range}${symbolName}`
+        const symbolName = isFileType ? '' : `#${contextFile.symbolName}`
+        return `@${displayPath(contextFile.uri)}${range}${symbolName}`
     }
 
     /**

@@ -29,10 +29,6 @@ export class VSCodeEditor implements Editor<CommandsController> {
         new EditorCodeLenses()
     }
 
-    public get fileName(): string {
-        return getEditor().active?.document?.fileName ?? ''
-    }
-
     /**
      * @deprecated Use {@link VSCodeEditor.getWorkspaceRootUri} instead
     /** NOTE DO NOT UES - this does not work with chat webview panel
@@ -64,7 +60,6 @@ export class VSCodeEditor implements Editor<CommandsController> {
 
         return {
             content: documentText,
-            filePath: documentUri.fsPath,
             fileUri: documentUri,
             selectionRange: documentSelection.isEmpty ? undefined : documentSelection,
             ignored: isCodyIgnoredFile(activeEditor.document.uri),
@@ -233,12 +228,11 @@ export class VSCodeEditor implements Editor<CommandsController> {
         )
 
         return {
-            fileName: vscode.workspace.asRelativePath(activeEditor.document.uri.fsPath),
+            fileUri: activeEditor.document.uri,
             selectedText: activeEditor.document.getText(selection),
             precedingText,
             followingText,
             selectionRange: selection,
-            fileUri: activeEditor.document.uri,
         }
     }
 
@@ -262,7 +256,6 @@ export class VSCodeEditor implements Editor<CommandsController> {
         )
 
         return {
-            fileName: vscode.workspace.asRelativePath(activeEditor.document.uri.fsPath),
             fileUri: activeEditor.document.uri,
             content,
         }

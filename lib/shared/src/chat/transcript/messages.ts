@@ -46,7 +46,7 @@ export interface ChatError {
     isChatErrorGuard: 'isChatErrorGuard'
 }
 
-export interface ChatMetadata {
+interface ChatMetadata {
     source?: ChatEventSource
     requestID?: string
     chatModel?: string
@@ -72,10 +72,6 @@ export type ChatInputHistory =
           inputText: string
           inputContextFiles: ContextFile[]
       }
-
-export interface OldChatHistory {
-    [chatID: string]: ChatMessage[]
-}
 
 export type ChatEventSource =
     | 'chat'
