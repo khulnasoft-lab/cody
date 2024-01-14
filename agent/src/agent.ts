@@ -599,22 +599,6 @@ export class Agent extends MessageHandler {
             return { models: panel.models ?? [] }
         })
 
-        this.registerRequest('chat/restore', async ({ modelID, messages, chatID }) => {
-            const chatModel = new SimpleChatModel(modelID, [], chatID, undefined)
-            for (const message of messages) {
-                if (message.error) {
-                    chatModel.addErrorAsBotMessage(message.error)
-                } else if (message.speaker === 'assistant') {
-                    chatModel.addBotMessage(message)
-                } else if (message.speaker === 'human') {
-                    chatModel.addHumanMessage(message)
-                }
-            }
-            const authStatus = await vscode.commands.executeCommand<AuthStatus>('cody.auth.status')
-            await chatHistory.saveChat(authStatus, chatModel.toTranscriptJSON())
-            return this.createChatPanel(vscode.commands.executeCommand('cody.chat.panel.restore', [chatID]))
-        })
-
         this.registerRequest('chat/models', async ({ id }) => {
             const panel = this.webPanels.getPanelOrError(id)
             if (panel.models) {
