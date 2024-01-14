@@ -1,4 +1,6 @@
-import path from 'path'
+import type * as vscode from 'vscode'
+
+import { uriBasename, uriExtname } from '@sourcegraph/cody-shared'
 
 /**
  * Extracts the test type from the given text.
@@ -31,20 +33,20 @@ export function toSlashCommand(command: string): string {
 
 /**
  * Checks if the given file path is a valid test file name.
- * @param fsPath - The file system path to check
+ * @param file - The file to check
  * @returns boolean - True if the path is a valid test file name, false otherwise.
  *
  * Removes file extension and checks if file name starts with 'test' or
  * ends with 'test', excluding files starting with 'test-'.
  * Also returns false for any files in node_modules directory.
  */
-export function isValidTestFileName(fsPath: string): boolean {
+export function isValidTestFileName(file: vscode.Uri): boolean {
     // Check if file path contains 'node_modules'
-    if (fsPath.includes('node_modules')) {
+    if (file.path.includes('node_modules')) {
         return false
     }
 
-    const fileNameWithoutExt = path.basename(fsPath, path.extname(fsPath))
+    const fileNameWithoutExt = uriBasename(file, uriExtname(file))
 
     const suffixTest = /([._-](test|spec))|Test|Spec$/
 

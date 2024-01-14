@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { URI } from 'vscode-uri'
 
 import { extractTestType, isValidTestFileName } from './utils'
 
@@ -42,12 +43,12 @@ describe('extractTestType', () => {
 
 describe('isValidTestFileName', () => {
     it.each([
-        ['/path/to/testFile.java', false],
-        ['/path/to/testFile.js', false],
-        ['/path/to/test_file.py', true],
-        ['/path/to/test-file.js', false],
-        ['/path/to/node_modules/file.js', false],
-        ['/path/to/file.js', false],
+        ['testFile.java', false],
+        ['testFile.js', false],
+        ['test_file.py', true],
+        ['test-file.js', false],
+        ['node_modules/file.js', false],
+        ['file.js', false],
 
         // Examples from various programming languages
         ['test_example.py', true],
@@ -68,9 +69,8 @@ describe('isValidTestFileName', () => {
         ['example_test.js', true],
         ['test_example.rb', true],
 
-        // Should not cache false positives
         ['contest.ts', false],
     ])('for filename %j it returns %j', (path, condition) => {
-        expect(isValidTestFileName(path)).toBe(condition)
+        expect(isValidTestFileName(URI.parse(`file:///${path}`))).toBe(condition)
     })
 })

@@ -2,7 +2,7 @@ import { findLast } from 'lodash'
 import * as vscode from 'vscode'
 import { type URI } from 'vscode-uri'
 
-import { getFileExtension } from '@sourcegraph/cody-shared/src/chat/recipes/helpers'
+import { uriBasename, uriExtname } from '@sourcegraph/cody-shared'
 import {
     getContextMessageWithResponse,
     type ContextMessage,
@@ -68,7 +68,7 @@ export const getFilesFromDir = async (
                 return !isDirectory && !isHiddenFile
             }
 
-            const isFileNameIncludesTest = isValidTestFileName(fileName)
+            const isFileNameIncludesTest = isValidTestFileName(vscode.Uri.joinPath(dirUri, fileName))
             return !isDirectory && !isHiddenFile && isFileNameIncludesTest
         })
     } catch (error) {
@@ -351,14 +351,14 @@ async function getCodebaseTestFilesContext(file: vscode.Uri, isUnitTest: boolean
 
     const testFilesPattern = createVSCodeTestSearchPattern(file, true)
     const testFilesMatches = await findVSCodeFiles(testFilesPattern, excludePattern, 5)
-    const filteredTestFiles = testFilesMatches.filter(file => isValidTestFileName(file.fsPath))
+    const filteredTestFiles = testFilesMatches.filter(file => isValidTestFileName(file))
 
     return getContextMessageFromFiles(filteredTestFiles)
 }
 
 function createVSCodeTestSearchPattern(file: vscode.Uri, allTestFiles?: boolean): string {
-    const fileExtension = getFileExtension(file)
-    const basenameWithoutExt = TODOBasename(fsPath, fileExtension)
+    const fileExtension = uriExtname(file)
+    const basenameWithoutExt = uriBasename(file, fileExtension)
 
     const root = '**'
     const defaultTestFilePattern = `/*test*${fileExtension}`
