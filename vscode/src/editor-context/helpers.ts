@@ -1,9 +1,8 @@
-import { basename, extname } from 'path'
-
 import { findLast } from 'lodash'
 import * as vscode from 'vscode'
 import { type URI } from 'vscode-uri'
 
+import { getFileExtension } from '@sourcegraph/cody-shared/src/chat/recipes/helpers'
 import {
     getContextMessageWithResponse,
     type ContextMessage,
@@ -326,9 +325,9 @@ async function getCurrentTestFileContext(file: vscode.Uri, isUnitTest: boolean):
     const excludePattern = isUnitTest ? '**/*{e2e,integration,node_modules}*/**' : undefined
 
     // pattern to search for test files with same name
-    const searchPattern = createVSCodeTestSearchPattern(file.fsPath)
+    const searchPattern = createVSCodeTestSearchPattern(file)
     const foundFiles = await findVSCodeFiles(searchPattern, excludePattern, 5)
-    const testFile = foundFiles.find(file => isValidTestFileName(file.fsPath))
+    const testFile = foundFiles.find(file => isValidTestFileName(file))
     if (testFile) {
         const context = await getFilePathContext(testFile)
         return createFileContextResponseMessage(context, testFile)
@@ -350,20 +349,20 @@ async function getCodebaseTestFilesContext(file: vscode.Uri, isUnitTest: boolean
     // exclude any files in the path with e2e or integration in the directory name
     const excludePattern = isUnitTest ? '**/*{e2e,integration,node_modules}*/**' : undefined
 
-    const testFilesPattern = createVSCodeTestSearchPattern(file.fsPath, true)
+    const testFilesPattern = createVSCodeTestSearchPattern(file, true)
     const testFilesMatches = await findVSCodeFiles(testFilesPattern, excludePattern, 5)
     const filteredTestFiles = testFilesMatches.filter(file => isValidTestFileName(file.fsPath))
 
     return getContextMessageFromFiles(filteredTestFiles)
 }
 
-function createVSCodeTestSearchPattern(fsPath: string, allTestFiles?: boolean): string {
-    const fileExtension = extname(fsPath)
-    const fileName = basename(fsPath, fileExtension)
+function createVSCodeTestSearchPattern(file: vscode.Uri, allTestFiles?: boolean): string {
+    const fileExtension = getFileExtension(file)
+    const basenameWithoutExt = TODOBasename(fsPath, fileExtension)
 
     const root = '**'
     const defaultTestFilePattern = `/*test*${fileExtension}`
-    const currentTestFilePattern = `/*{test_${fileName},${fileName}_test,test.${fileName},${fileName}.test,${fileName}Test}${fileExtension}`
+    const currentTestFilePattern = `/*{test_${basenameWithoutExt},${basenameWithoutExt}_test,test.${basenameWithoutExt},${basenameWithoutExt}.test,${basenameWithoutExt}Test}${fileExtension}`
 
     if (allTestFiles) {
         return `${root}${defaultTestFilePattern}`

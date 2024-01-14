@@ -61,6 +61,10 @@ export async function getContextMessagesFromSelection(
     )
 }
 
+/**
+ * Return the file's extension, lowercased and without the leading '.' character.
+ * @example getFileExtension('dir/file.ts') === 'ts'
+ */
 export function getFileExtension(file: URI | string): string {
     return path
         .extname(typeof file === 'string' ? file : file.path)
