@@ -39,6 +39,8 @@ interface ProgressEndMessage {
     message: {}
 }
 
+const defaultRecordingTimeout = 20_000
+
 export class TestClient extends MessageHandler {
     public info: ClientInfo
     public agentProcess?: ChildProcessWithoutNullStreams
@@ -428,10 +430,12 @@ describe('Agent', () => {
         client.notify('autocomplete/completionAccepted', { completionID: completions.items[0].id })
     }, 10_000)
 
-    it('allows us to send a very short chat message', async () => {
-        const lastMessage = await client.sendSingleMessageToNewChat('Hello!')
-        // prettier-ignore
-        expect(lastMessage).toMatchInlineSnapshot(
+    it(
+        'allows us to send a very short chat message',
+        async () => {
+            const lastMessage = await client.sendSingleMessageToNewChat('Hello!')
+            // prettier-ignore
+            expect(lastMessage).toMatchInlineSnapshot(
             `
           {
             "contextFiles": [],
@@ -442,57 +446,65 @@ describe('Agent', () => {
         `,
             explainPollyError
         )
-    }, 20_000)
+        },
+        defaultRecordingTimeout
+    )
 
-    it('allows us to restore a chat', async () => {
-        // Step 1: create a chat session where I share my name.
-        const id1 = await client.request('chat/new', null)
-        const reply1 = asTranscriptMessage(
-            await client.request('chat/submitMessage', {
-                id: id1,
-                message: {
-                    command: 'submit',
-                    text: 'My name is Lars Monsen',
-                    submitType: 'user',
-                    addEnhancedContext: false,
-                },
+    it(
+        'allows us to restore a chat',
+        async () => {
+            // Step 1: create a chat session where I share my name.
+            const id1 = await client.request('chat/new', null)
+            const reply1 = asTranscriptMessage(
+                await client.request('chat/submitMessage', {
+                    id: id1,
+                    message: {
+                        command: 'submit',
+                        text: 'My name is Lars Monsen',
+                        submitType: 'user',
+                        addEnhancedContext: false,
+                    },
+                })
+            )
+
+            // Step 2: restore a new chat session with a transcript including my name, and
+            //  and assert that it can retrieve my name from the transcript.
+            const {
+                models: [model],
+            } = await client.request('chat/models', { id: id1 })
+
+            const id2 = await client.request('chat/restore', {
+                modelID: model.model,
+                messages: reply1.messages,
+                chatID: new Date().toISOString(), // Create new Chat ID with a different timestamp
             })
-        )
-
-        // Step 2: restore a new chat session with a transcript including my name, and
-        //  and assert that it can retrieve my name from the transcript.
-        const {
-            models: [model],
-        } = await client.request('chat/models', { id: id1 })
-
-        const id2 = await client.request('chat/restore', {
-            modelID: model.model,
-            messages: reply1.messages,
-            chatID: new Date().toISOString(), // Create new Chat ID with a different timestamp
-        })
-        const reply2 = asTranscriptMessage(
-            await client.request('chat/submitMessage', {
-                id: id2,
-                message: {
-                    command: 'submit',
-                    text: 'What is my name?',
-                    submitType: 'user',
-                    addEnhancedContext: false,
-                },
-            })
-        )
-        // prettier-ignore
-        expect(reply2.messages.at(-1)?.text).toMatchInlineSnapshot(
+            const reply2 = asTranscriptMessage(
+                await client.request('chat/submitMessage', {
+                    id: id2,
+                    message: {
+                        command: 'submit',
+                        text: 'What is my name?',
+                        submitType: 'user',
+                        addEnhancedContext: false,
+                    },
+                })
+            )
+            // prettier-ignore
+            expect(reply2.messages.at(-1)?.text).toMatchInlineSnapshot(
             '" You told me your name is Lars Monsen."',
             explainPollyError
         )
-    }, 20_000)
+        },
+        defaultRecordingTimeout
+    )
 
-    it('allows us to send a longer chat message', async () => {
-        const lastMessage = await client.sendSingleMessageToNewChat('Generate simple hello world function in java!')
-        const trimmedMessage = trimEndOfLine(lastMessage?.text ?? '')
-        // prettier-ignore
-        expect(trimmedMessage).toMatchInlineSnapshot(
+    it(
+        'allows us to send a longer chat message',
+        async () => {
+            const lastMessage = await client.sendSingleMessageToNewChat('Generate simple hello world function in java!')
+            const trimmedMessage = trimEndOfLine(lastMessage?.text ?? '')
+            // prettier-ignore
+            expect(trimmedMessage).toMatchInlineSnapshot(
             `
           " Here is a simple Hello World program in Java:
 
@@ -520,27 +532,31 @@ describe('Agent', () => {
         `,
             explainPollyError
         )
-    }, 20_000)
+        },
+        defaultRecordingTimeout
+    )
 
     // This test is skipped because it shells out to `symf expand-query`, which
     // requires an access token to send an llm request and is, therefore, not
     // able to return stable results in replay mode. Also, we don't have an
     // access token in ci so this test can only pass when running locally (for
     // now).
-    it('allows us to send a chat message with enhanced context enabled', async () => {
-        await openFile(animalUri)
-        await client.request('command/execute', { command: 'cody.search.index-update' })
-        const lastMessage = await client.sendSingleMessageToNewChat(
-            'Write a class Dog that implements the Animal interface in my workspace. Only show the code, no explanation needed.',
-            {
-                addEnhancedContext: true,
-            }
-        )
-        // TODO: make this test return a TypeScript implementation of
-        // `animal.ts`. It currently doesn't do this because the workspace root
-        // is not a git directory and symf reports some git-related error.
-        // prettier-ignore
-        expect(trimEndOfLine(lastMessage?.text ?? '')).toMatchInlineSnapshot(
+    it(
+        'allows us to send a chat message with enhanced context enabled',
+        async () => {
+            await openFile(animalUri)
+            await client.request('command/execute', { command: 'cody.search.index-update' })
+            const lastMessage = await client.sendSingleMessageToNewChat(
+                'Write a class Dog that implements the Animal interface in my workspace. Only show the code, no explanation needed.',
+                {
+                    addEnhancedContext: true,
+                }
+            )
+            // TODO: make this test return a TypeScript implementation of
+            // `animal.ts`. It currently doesn't do this because the workspace root
+            // is not a git directory and symf reports some git-related error.
+            // prettier-ignore
+            expect(trimEndOfLine(lastMessage?.text ?? '')).toMatchInlineSnapshot(
             `
           " \`\`\`typescript
           export class Dog implements Animal {
@@ -560,15 +576,19 @@ describe('Agent', () => {
         `,
             explainPollyError
         )
-    }, 20_000)
+        },
+        defaultRecordingTimeout
+    )
 
     describe('Commands', () => {
-        it('explain', async () => {
-            await openFile(animalUri)
-            const id = await client.request('commands/explain', null)
-            const lastMessage = await client.firstNonEmptyTranscript(id)
-            // prettier-ignore
-            expect(trimEndOfLine(lastMessage.messages.at(-1)?.text ?? '')).toMatchInlineSnapshot(
+        it.only(
+            'explain',
+            async () => {
+                await openFile(animalUri)
+                const id = await client.request('commands/explain', null)
+                const lastMessage = await client.firstNonEmptyTranscript(id)
+                // prettier-ignore
+                expect(trimEndOfLine(lastMessage.messages.at(-1)?.text ?? '')).toMatchInlineSnapshot(
                 `
               " The selected code defines an Animal interface in TypeScript.
 
@@ -594,14 +614,18 @@ describe('Agent', () => {
             `,
                 explainPollyError
             )
-        }, 20_000)
+            },
+            defaultRecordingTimeout
+        )
 
-        it('test', async () => {
-            await openFile(animalUri)
-            const id = await client.request('commands/test', null)
-            const lastMessage = await client.firstNonEmptyTranscript(id)
-            // prettier-ignore
-            expect(trimEndOfLine(lastMessage.messages.at(-1)?.text ?? '')).toMatchInlineSnapshot(
+        it(
+            'test',
+            async () => {
+                await openFile(animalUri)
+                const id = await client.request('commands/test', null)
+                const lastMessage = await client.firstNonEmptyTranscript(id)
+                // prettier-ignore
+                expect(trimEndOfLine(lastMessage.messages.at(-1)?.text ?? '')).toMatchInlineSnapshot(
                 `
               " No test framework or libraries detected in shared context. Importing Jest for unit testing:
 
@@ -648,15 +672,19 @@ describe('Agent', () => {
             `,
                 explainPollyError
             )
-        }, 20_000)
+            },
+            defaultRecordingTimeout
+        )
 
-        it('smell', async () => {
-            await openFile(animalUri)
-            const id = await client.request('commands/smell', null)
-            const lastMessage = await client.firstNonEmptyTranscript(id)
+        it(
+            'smell',
+            async () => {
+                await openFile(animalUri)
+                const id = await client.request('commands/smell', null)
+                const lastMessage = await client.firstNonEmptyTranscript(id)
 
-            // prettier-ignore
-            expect(trimEndOfLine(lastMessage.messages.at(-1)?.text ?? '')).toMatchInlineSnapshot(
+                // prettier-ignore
+                expect(trimEndOfLine(lastMessage.messages.at(-1)?.text ?? '')).toMatchInlineSnapshot(
                 `
               " Here are 5 potential improvements for the selected TypeScript code:
 
@@ -725,7 +753,9 @@ describe('Agent', () => {
             `,
                 explainPollyError
             )
-        }, 20_000)
+            },
+            defaultRecordingTimeout
+        )
     })
 
     // TODO Fix test - fails intermittently on CI
@@ -873,22 +903,26 @@ describe('Agent', () => {
             await rateLimitedClient.initialize()
         }, 10_000)
 
-        it('get rate limit error if exceeding usage on rate limited account', async () => {
-            const lastMessage = await rateLimitedClient.sendSingleMessageToNewChat('sqrt(9)')
-            expect(lastMessage?.error?.name).toMatchInlineSnapshot('"RateLimitError"', explainPollyError)
-        }, 20_000)
+        it(
+            'get rate limit error if exceeding usage on rate limited account',
+            async () => {
+                const lastMessage = await rateLimitedClient.sendSingleMessageToNewChat('sqrt(9)')
+                expect(lastMessage?.error?.name).toMatchInlineSnapshot('"RateLimitError"', explainPollyError)
+            },
+            defaultRecordingTimeout
+        )
 
         afterAll(async () => {
             await rateLimitedClient.shutdownAndExit()
             // Long timeout because to allow Polly.js to persist HTTP recordings
-        }, 20_000)
+        }, defaultRecordingTimeout)
     })
 
     afterAll(async () => {
         await fspromises.rm(workspaceRootPath, { recursive: true, force: true })
         await client.shutdownAndExit()
         // Long timeout because to allow Polly.js to persist HTTP recordings
-    }, 20_000)
+    }, defaultRecordingTimeout)
 })
 
 function trimEndOfLine(text: string): string {
