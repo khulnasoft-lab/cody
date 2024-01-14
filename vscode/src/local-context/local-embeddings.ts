@@ -583,7 +583,9 @@ export class LocalEmbeddingsController implements LocalEmbeddingsFetcher, Contex
         try {
             const results = (await this.query(query)).results
             logDebug('LocalEmbeddingsController', 'query', `returning ${results.length} results`)
-            return results
+            // TODO(sqs): not correct!!
+            const dir = vscode.workspace.workspaceFolders![0]!.uri.fsPath
+            return results.map(result => ({ ...result, uri: vscode.Uri.parse(dir + '/' + result.fileName) }))
         } catch (error) {
             logDebug('LocalEmbeddingsController', 'query', captureException(error), error)
             return []
