@@ -34,7 +34,7 @@ jobs:
         shell: bash
         id: pnpm-cache
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-${{ matrix.node }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -62,7 +62,7 @@ jobs:
         shell: bash
         id: pnpm-cache
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -96,7 +96,7 @@ jobs:
         shell: bash
         id: pnpm-cache
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -139,7 +139,7 @@ jobs:
         shell: bash
         id: pnpm-cache
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -165,7 +165,7 @@ jobs:
         shell: bash
         id: pnpm-cache
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -188,7 +188,7 @@ jobs:
         shell: bash
         id: pnpm-cache
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
